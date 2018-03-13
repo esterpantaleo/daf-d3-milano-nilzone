@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <head>
   <meta charset="utf-8">
-  <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
   <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v0.37.0/mapbox-gl.css" rel="stylesheet" />
   <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v0.37.0/mapbox-gl.js"></script>
   <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script src="https://d3js.org/d3-queue.v3.min.js"></script>
   <script src="d3-tip.js"></script><!-- downloaded from https://github.com/VACLab/d3-tip -->
   <script src="app.js"></script>
   <link rel="stylesheet" href="styles.css">
@@ -12,4 +13,123 @@
 
 <body>
   <div id="map"></div>
+<script>
+mapboxgl.accessToken = 'pk.eyJ1IjoiZW5qYWxvdCIsImEiOiJjaWhtdmxhNTIwb25zdHBsejk0NGdhODJhIn0.2-F2hS_oTZenAWc0BMf_uw';
+
+// Setup mapbox-gl map
+var map = new mapboxgl.Map({
+    container: 'map', // container id
+    style: 'mapbox://styles/mapbox/outdoors-v9', // 'pencil-v4.json',
+    center: [9.191383, 45.464211],
+    zoom: 10
+});
+
+// Overlay svg layer that we can manipulate with d3
+var container = map.getCanvasContainer();
+var svg = d3.select(container).append('svg');
+
+// Projection functions
+var transform = d3.geoTransform({ point: projectPoint });
+var path = d3.geoPath().projection(transform);
+
+// Define tooltip
+var tip = d3.tip()
+    .attr('class', 'd3-tip')
+    .offset([-10, 0])
+    .html(function(d) {
+        return Object.keys(d).map(function(key) {
+            return "<strong>" + key + ":</strong> <span style='color:red'>" + d[key] + "</span></br>";
+        }).join("");
+    });
+svg.call(tip);
+
+// Load map and datasets
+map.on("load", function () {
+    d3.queue(2)
+	.defer(d3.csv, 'dots.csv')
+	.defer(d3.json, 'NILZone.geojson')
+        .await(ready);
+});
+
+// Project coordinates to the map's current state
+function project(d) {
+    return map.project(new mapboxgl.LngLat(+d[0], +d[1]));
+};
+
+// Project any point (lon, lat) to map's current state
+function projectPoint(lon, lat) { // degrees
+    var point = map.project(new mapboxgl.LngLat(lon, lat));
+    this.stream.point(point.x, point.y);
+};
+
+function mouseoverCircle(d) {
+    // Highlight Circle
+    d3.select(this).attr('fill-opacity', 0.9);
+    tip.show(d);
+};
+
+function mouseoverPolygon(d) {
+    // Highlight Polygon
+    d3.select(this).attr('fill-opacity', 0.9);
+    tip.show(d.properties);
+};
+
+function mouseout(d) {
+    // Reset color
+    d3.select(this).attr('fill-opacity', 0.4);
+    tip.hide();
+};
+
+function ready(error, csv, geojson) {
+    if (error) throw error;
+
+    // Projection functions
+    var transform = d3.geoTransform({ point: projectPoint });
+    var path = d3.geoPath().projection(transform);
+
+    // Draw Circles and Polygons
+    var circles, polygons;
+    drawCSV(csv);
+    drawGeojson(geojson);
+
+    // Handle updates
+    update();
+    map.on("viewreset", update);
+    map.on("move", update);
+    map.on("moveend", update);
+
+    //Draw Circles with d3
+    function drawCSV(data) {
+        // Add circles
+        circles = svg.selectAll("circle")
+            .data(data)
+            .enter()
+            .append("circle")
+            .attr("r", 6)
+            .attr('fill-opacity', 0.4) 
+            .on('mouseover', mouseoverCircle)
+            .on('mouseout', mouseout);
+    };
+
+    // Draw Polygons with d3
+    function drawGeojson(data) {
+        // Add polygons
+        polygons = svg.selectAll("path")
+            .data(data.features)
+            .enter()
+            .append("path")
+            .attr('fill-opacity', 0.4)
+            .on('mouseover', mouseoverPolygon)
+            .on('mouseout', mouseout);
+    };
+
+    // Update d3 shapes' positions to the map's current state
+    function update() {
+        circles.attr("cx", function(d) { return project([d.lon, d.lat]).x; })
+            .attr("cy", function(d) { return project([d.lon, d.lat]).y; });
+        polygons.attr("d", path);
+    };
+};
+</script>
 </body>
+</html>

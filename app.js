@@ -3,7 +3,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZW5qYWxvdCIsImEiOiJjaWhtdmxhNTIwb25zdHBsejk0N
 // Setup mapbox-gl map
 var map = new mapboxgl.Map({
     container: 'map', // container id
-    style: 'mapbox://styles/mapbox/outdoors-v9',//'pencil-v4.json',
+    style: 'mapbox://styles/mapbox/outdoors-v9', // 'pencil-v4.json',
     center: [9.191383, 45.464211],
     zoom: 10
 });
@@ -13,16 +13,16 @@ var container = map.getCanvasContainer();
 var svg = d3.select(container).append('svg');
 
 // Projection functions
-var transform = d3.geoTransform({ point: projectPoint});
+var transform = d3.geoTransform({ point: projectPoint });
 var path = d3.geoPath().projection(transform);
 
 // Load map and datasets
 map.on('load', function () {
-    //draw points from csv
+    // draw points from csv
     d3.csv('dots.csv', function(err, data) {
         drawCSV(data);
     });
-    //draw geojson shape
+    // draw geojson shape
     d3.json('NILZone.geojson', function(err, data) {
         drawPolygons(data);
     });
@@ -34,7 +34,7 @@ function project(d) {
 };
 
 // Project any point (lon, lat) to map's current state
-function projectPoint(lon, lat) {//degrees
+function projectPoint(lon, lat) { // degrees
     var point = map.project(new mapboxgl.LngLat(lon, lat));
     this.stream.point(point.x, point.y);
 };
@@ -90,7 +90,7 @@ function update() {
 };
 
 function mouseoverPolygon(d) {
-    // higlight polygon
+    // Highlight polygon
     d3.select(this).attr('fill-opacity', 0.7);
     tip.show(d);
 };
