@@ -28,11 +28,10 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZW5qYWxvdCIsImEiOiJjaWhtdmxhNTIwb25zdHBsejk0N
 // Setup mapbox-gl map
 var map = new mapboxgl.Map({
     container: 'map', // container id
-    style: 'mapbox://styles/mapbox/outdoors-v9', // 'pencil-v4.json',
+    style: 'mapbox://styles/esterpantaleo/cjetr5dlnkl9o2rpdyewhj5vm',
     center: center,
     zoom: 10
 });
-
 // Overlay svg layer that we can manipulate with d3
 var container = map.getCanvasContainer();
 var svg = d3.select(container).append('svg');
