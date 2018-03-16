@@ -13,13 +13,23 @@
 <body>
   <div id="map"></div>
 <script>
+//change center
+//units: longitude, latitude
+var center = [9.191383, 45.464211];
+//change file
+//format: geojson EPSG:4326
+var geojson1 = "src/data/NILZone.EPSG4326.geojson";
+//change file
+//format: geojson EPSG:4326
+var geojson2 = "src/data/ds98_infogeo_sezioni_censimento_localizzazione_2011c.EPSG4326.geojson";
+//use your own token
 mapboxgl.accessToken = 'pk.eyJ1IjoiZW5qYWxvdCIsImEiOiJjaWhtdmxhNTIwb25zdHBsejk0NGdhODJhIn0.2-F2hS_oTZenAWc0BMf_uw';
 
 // Setup mapbox-gl map
 var map = new mapboxgl.Map({
     container: 'map', // container id
     style: 'mapbox://styles/mapbox/outdoors-v9', // 'pencil-v4.json',
-    center: [9.191383, 45.464211],
+    center: center,
     zoom: 10
 });
 
@@ -45,8 +55,14 @@ svg.call(tip);
 // Load map and datasets
 map.on("load", function () {
     d3.queue(2)
-	.defer(d3.csv, 'src/data/dots.csv')
-	.defer(d3.json, 'src/data/NILZone.geojson')
+        .defer(d3.json, geojson1)
+        //downloaded from https://www.istat.it/it/archivio/124086,
+        //Versione non generalizzata più dettagliata WGS84 UTM32N,
+        //converted the shapefile from WGS84 to EPSG:4326 using qgis
+        .defer(d3.json, geojson2)
+        //downloaded from ....
+        //converted from WGS84 to EPSG:4326 using qgis
+        //.defer(d3.csv, 'src/data/dots.csv')
         .await(ready);
 });
 
@@ -61,11 +77,11 @@ function projectPoint(lon, lat) { // degrees
     this.stream.point(point.x, point.y);
 };
 
-function mouseoverCircle(d) {
+/*function mouseoverCircle(d) {
     // Highlight Circle
     d3.select(this).attr('fill-opacity', 0.9);
     tip.show(d);
-};
+};*/
 
 function mouseoverPolygon(d) {
     // Highlight Polygon
@@ -79,7 +95,7 @@ function mouseout(d) {
     tip.hide();
 };
 
-function ready(error, csv, geojson) {
+function ready(error, data1, data2) { //,csv
     if (error) throw error;
 
     // Projection functions
@@ -87,9 +103,36 @@ function ready(error, csv, geojson) {
     var path = d3.geoPath().projection(transform);
 
     // Draw Circles and Polygons
-    var circles, polygons;
-    drawCSV(csv);
-    drawGeojson(geojson);
+    var polygons1, polygons2;
+    //var circles;
+
+/*    // Add circles
+    circles = svg.selectAll("circle")
+        .data(csv)
+        .enter()
+        .append("circle")
+        .attr("r", 6)
+        .attr('fill-opacity', 0.4)
+        .on('mouseover', mouseoverCircle)
+        .on('mouseout', mouseout);*/
+
+     polygons2 = svg.selectAll(".geojson2")
+        .data(data2.features)
+        .enter()
+        .append("path")
+        .attr("class", "path2")
+        .attr('fill-opacity', 0.4)
+        .on('mouseover', mouseoverPolygon)
+        .on('mouseout', mouseout);
+
+
+    polygons1 = svg.selectAll(".geojson1")
+        .data(data1.features)
+        .enter()
+        .append("path")
+        .attr("class", "path1")
+        .attr('fill-opacity', 0.4);
+
 
     // Handle updates
     update();
@@ -97,36 +140,12 @@ function ready(error, csv, geojson) {
     map.on("move", update);
     map.on("moveend", update);
 
-    //Draw Circles with d3
-    function drawCSV(data) {
-        // Add circles
-        circles = svg.selectAll("circle")
-            .data(data)
-            .enter()
-            .append("circle")
-            .attr("r", 6)
-            .attr('fill-opacity', 0.4) 
-            .on('mouseover', mouseoverCircle)
-            .on('mouseout', mouseout);
-    };
-
-    // Draw Polygons with d3
-    function drawGeojson(data) {
-        // Add polygons
-        polygons = svg.selectAll("path")
-            .data(data.features)
-            .enter()
-            .append("path")
-            .attr('fill-opacity', 0.4)
-            .on('mouseover', mouseoverPolygon)
-            .on('mouseout', mouseout);
-    };
-
     // Update d3 shapes' positions to the map's current state
     function update() {
-        circles.attr("cx", function(d) { return project([d.lon, d.lat]).x; })
-            .attr("cy", function(d) { return project([d.lon, d.lat]).y; });
-        polygons.attr("d", path);
+        //circles.attr("cx", function(d) { return project([d.lon, d.lat]).x; })
+        //    .attr("cy", function(d) { return project([d.lon, d.lat]).y; });
+        polygons1.attr("d", path);
+        polygons2.attr("d", path);
     };
 };
 </script>

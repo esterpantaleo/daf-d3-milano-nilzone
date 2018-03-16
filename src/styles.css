@@ -21,11 +21,17 @@ circle {
     stroke: #004d60;
     stroke-width: 1;
 }
-path {
+.path1 {
+    fill: none;
+    stroke: red;
+    stroke-width: 1;
+    z-index: 200;
+}
+.path2 {
     fill: black;
     stroke: black;
     stroke-width: 1;
-    z-index: 100;
+    z-index: 10;
 }
 .d3-tip {
     line-height: 1;
